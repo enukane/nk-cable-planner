@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>nk-cable-planner - Network Cable Planning Tool</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header>
+      <h1>nk-cable-planner</h1>
+    </header>
+
+    <!-- Menu Bar -->
+    <nav id="menubar">
+      <button id="btn-new">New</button>
+      <button id="btn-export">Export</button>
+      <button id="btn-import">Import</button>
+      <button id="btn-screenshot">Screenshot</button>
+      <button id="btn-csv">Export CSV</button>
+    </nav>
+
+    <!-- Toolbar -->
+    <div id="toolbar">
+      <button id="btn-load-image" class="tool-btn">📁 Load Image</button>
+      <button id="btn-scale" class="tool-btn">📏 Set Scale</button>
+      <button id="btn-device" class="tool-btn">📍 Place Device</button>
+      <button id="btn-cable-detail" class="tool-btn" disabled>🔌 Detailed Cable</button>
+      <button id="btn-cable-detail-ortho" class="tool-btn" disabled>📐 Ortho Cable</button>
+      <button id="btn-cable-simple" class="tool-btn" disabled>⚡ Simple Cable</button>
+      <button id="btn-delete" class="tool-btn">🗑️ Delete</button>
+
+      <div id="device-type-selector" style="display:none;">
+        <label><input type="radio" name="device-type" value="router" checked> Router</label>
+        <label><input type="radio" name="device-type" value="poe_sw"> PoE SW</label>
+        <label><input type="radio" name="device-type" value="ap"> AP</label>
+        <label><input type="radio" name="device-type" value="pc"> PC</label>
+      </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settings-panel">
+      <h3>Settings</h3>
+      <label>
+        Margin: <input type="number" id="margin-rate" value="10" min="0" max="100" step="1">%
+      </label>
+      <label>
+        <input type="radio" name="rounding" value="on" checked> Rounding On
+      </label>
+      <label>
+        <input type="radio" name="rounding" value="off"> Rounding Off
+      </label>
+      <label>
+        <input type="checkbox" id="show-labels" checked> Show Labels
+      </label>
+      <label>
+        <input type="checkbox" id="show-grid"> Show Grid
+      </label>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content">
+      <!-- Canvas Area -->
+      <div id="canvas-container">
+        <div id="zoom-controls">
+          <button id="btn-zoom-in">+</button>
+          <span id="zoom-level">100%</span>
+          <button id="btn-zoom-out">-</button>
+          <button id="btn-zoom-reset">Reset</button>
+        </div>
+        <canvas id="main-canvas" width="1200" height="800"></canvas>
+      </div>
+
+      <!-- Sidebar -->
+      <aside id="sidebar">
+        <div id="tabs">
+          <button id="tab-devices" class="tab-btn active">Devices</button>
+          <button id="tab-cables" class="tab-btn">Cables</button>
+          <button id="tab-summary" class="tab-btn">Summary</button>
+        </div>
+        <div id="tab-content">
+          <!-- Tab content (dynamically generated) -->
+        </div>
+      </aside>
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="image-file-input" accept="image/*" style="display:none;">
+    <input type="file" id="project-file-input" accept=".json" style="display:none;">
+  </div>
+
+  <!-- Modal dialog (dynamically generated) -->
+  <div id="modal-overlay" style="display:none;"></div>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
