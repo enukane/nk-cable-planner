@@ -382,8 +382,15 @@ class Application {
    * Handle device placement click
    */
   handleDeviceClick(pos) {
-    const name = prompt('Enter device name (leave empty for auto-generation):');
-    if (name === null) return; // Cancel
+    let name;
+
+    // 電源アウトレットまたはLANパッチの場合は名前入力をスキップ
+    if (this.state.selectedDeviceType === 'power_outlet' || this.state.selectedDeviceType === 'lan_patch') {
+      name = undefined;
+    } else {
+      name = prompt('Enter device name (leave empty for auto-generation):');
+      if (name === null) return; // Cancel
+    }
 
     const device = this.deviceManager.addDevice(
       this.state.selectedDeviceType,
@@ -789,6 +796,7 @@ class Application {
       const modeText = cable.mode === 'detailed' ? 'Detailed' : 'Simple';
 
       const offsetText = cable.offset > 0 ? ` (${cable.lengthM.toFixed(1)}m + ${cable.offset.toFixed(1)}m offset)` : '';
+      const colorName = CONSTANTS.CABLE_COLOR_NAMES[cable.color] || 'Custom';
 
       return `
         <div class="cable-item ${cable.id === this.renderer.selectedCableId ? 'selected' : ''}" data-id="${cable.id}">
@@ -799,7 +807,11 @@ class Application {
                 <span class="cable-name-text" data-id="${cable.id}">${cable.name}</span>
                 <button class="btn-edit-cable-name" data-id="${cable.id}" title="Edit name">✏️</button>
               </div>
-              <div class="cable-mode">${modeText}: ${fromDevice?.name} → ${toDevice?.name}</div>
+              <div class="cable-mode">
+                ${modeText}: ${fromDevice?.name} → ${toDevice?.name}
+                <span class="cable-type-badge" style="background-color: ${cable.color}">${colorName}</span>
+                <button class="btn-change-color" data-id="${cable.id}" title="Change cable type">🎨</button>
+              </div>
               <div class="cable-length">
                 ${length.toFixed(1)}m${offsetText}
                 <button class="btn-edit-offset" data-id="${cable.id}" title="Set offset">📏</button>
@@ -818,7 +830,8 @@ class Application {
       item.addEventListener('click', (e) => {
         if (!e.target.classList.contains('btn-delete-cable') &&
             !e.target.classList.contains('btn-edit-cable-name') &&
-            !e.target.classList.contains('btn-edit-offset')) {
+            !e.target.classList.contains('btn-edit-offset') &&
+            !e.target.classList.contains('btn-change-color')) {
           this.renderer.selectedCableId = item.dataset.id;
           this.render();
           this.updateUI();
@@ -843,6 +856,13 @@ class Application {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.handleSetCableOffset(btn.dataset.id);
+      });
+    });
+
+    container.querySelectorAll('.btn-change-color').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.handleChangeCableColor(btn.dataset.id);
       });
     });
   }
@@ -899,6 +919,46 @@ class Application {
   }
 
   /**
+   * Handle cable color change
+   */
+  handleChangeCableColor(cableId) {
+    const cable = this.cableManager.getCableById(cableId);
+    if (!cable) return;
+
+    const colorOptions = `
+1. LAN Cable (Green)
+2. Power Cable (Red)
+3. Other Cable (Dark Gray)
+
+Enter your choice (1-3):`;
+
+    const choice = prompt(colorOptions);
+    if (!choice) return;
+
+    let newColor;
+    switch (choice) {
+      case '1':
+        newColor = CONSTANTS.CABLE_COLORS.LAN;
+        break;
+      case '2':
+        newColor = CONSTANTS.CABLE_COLORS.POWER;
+        break;
+      case '3':
+        newColor = CONSTANTS.CABLE_COLORS.OTHER;
+        break;
+      default:
+        alert('Invalid choice. Please enter 1, 2, or 3.');
+        return;
+    }
+
+    if (this.cableManager.setCableColor(cableId, newColor)) {
+      this.saveToLocalStorage();
+      this.render();
+      this.updateUI();
+    }
+  }
+
+  /**
    * Render summary tab
    */
   renderSummaryTab(container) {
@@ -908,7 +968,13 @@ class Application {
 
     const sorted = Object.entries(summary).sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]));
 
-    let html = '<table class="summary-table"><thead><tr><th>Cable Length</th><th>Quantity</th></tr></thead><tbody>';
+    // LANケーブル数を計算
+    const lanCableCount = this.cableManager.getAllCables().filter(
+      c => c.color === CONSTANTS.CABLE_COLORS.LAN
+    ).length;
+
+    let html = '<h4 style="color: #00AA00; margin-bottom: 10px;">LAN Cable Summary</h4>';
+    html += '<table class="summary-table"><thead><tr><th>Cable Length</th><th>Quantity</th></tr></thead><tbody>';
 
     sorted.forEach(([length, count]) => {
       html += `<tr><td>${length}m</td><td>${count}</td></tr>`;
@@ -918,10 +984,12 @@ class Application {
 
     html += `
       <div class="summary-stats">
-        <div><strong>Total cables:</strong> ${stats.total}</div>
+        <div><strong>LAN cables:</strong> ${lanCableCount}</div>
+        <div><strong>Total LAN length:</strong> ${totalLength.toFixed(1)}m</div>
+        <hr style="margin: 10px 0;">
+        <div><strong>All cables:</strong> ${stats.total}</div>
         <div><strong>Detailed:</strong> ${stats.detailed}</div>
         <div><strong>Simple:</strong> ${stats.simple}</div>
-        <div><strong>Total length:</strong> ${totalLength.toFixed(1)}m</div>
       </div>
     `;
 

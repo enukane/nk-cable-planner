@@ -11,7 +11,9 @@ export class DeviceManager {
       router: 0,
       poe_sw: 0,
       ap: 0,
-      pc: 0
+      pc: 0,
+      power_outlet: 0,
+      lan_patch: 0
     };
   }
 
@@ -20,12 +22,13 @@ export class DeviceManager {
    * @param {string} type - 機器タイプ
    * @param {number} x - X座標
    * @param {number} y - Y座標
-   * @param {string} name - 機器名（省略時は自動生成）
+   * @param {string} name - 機器名（省略時は自動生成、power_outletの場合は空文字）
    * @returns {Object} 追加した機器オブジェクト
    */
   addDevice(type, x, y, name = null) {
     const id = generateUUID();
-    const deviceName = name || this._generateDeviceName(type);
+    // 電源アウトレットまたはLANパッチの場合は名前を空にする
+    const deviceName = (type === 'power_outlet' || type === 'lan_patch') ? '' : (name || this._generateDeviceName(type));
     const color = CONSTANTS.DEVICE_COLORS[type];
 
     const device = {
@@ -40,7 +43,7 @@ export class DeviceManager {
     this.devices.push(device);
 
     // カスタム名でない場合はカウンターをインクリメント
-    if (!name) {
+    if (!name && type !== 'power_outlet' && type !== 'lan_patch') {
       this.counters[type]++;
     }
 

@@ -37,31 +37,33 @@
         <label><input type="radio" name="device-type" value="poe_sw"> PoE SW</label>
         <label><input type="radio" name="device-type" value="ap"> AP</label>
         <label><input type="radio" name="device-type" value="pc"> PC</label>
+        <label><input type="radio" name="device-type" value="power_outlet"> Power Outlet</label>
+        <label><input type="radio" name="device-type" value="lan_patch"> LAN Patch</label>
       </div>
-    </div>
-
-    <!-- Settings Panel -->
-    <div id="settings-panel">
-      <h3>Settings</h3>
-      <label>
-        Margin: <input type="number" id="margin-rate" value="10" min="0" max="100" step="1">%
-      </label>
-      <label>
-        <input type="radio" name="rounding" value="on" checked> Rounding On
-      </label>
-      <label>
-        <input type="radio" name="rounding" value="off"> Rounding Off
-      </label>
-      <label>
-        <input type="checkbox" id="show-labels" checked> Show Labels
-      </label>
-      <label>
-        <input type="checkbox" id="show-grid"> Show Grid
-      </label>
     </div>
 
     <!-- Main Content -->
     <div id="main-content">
+      <!-- Settings Panel -->
+      <div id="settings-panel">
+        <h3>Settings</h3>
+        <label>
+          Margin: <input type="number" id="margin-rate" value="10" min="0" max="100" step="1">%
+        </label>
+        <label>
+          <input type="radio" name="rounding" value="on" checked> Rounding On
+        </label>
+        <label>
+          <input type="radio" name="rounding" value="off"> Rounding Off
+        </label>
+        <label>
+          <input type="checkbox" id="show-labels" checked> Show Labels
+        </label>
+        <label>
+          <input type="checkbox" id="show-grid"> Show Grid
+        </label>
+      </div>
+
       <!-- Canvas Area -->
       <div id="canvas-container">
         <div id="zoom-controls">

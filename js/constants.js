@@ -4,7 +4,9 @@ export const CONSTANTS = {
     ROUTER: 'router',
     POE_SW: 'poe_sw',
     AP: 'ap',
-    PC: 'pc'
+    PC: 'pc',
+    POWER_OUTLET: 'power_outlet',
+    LAN_PATCH: 'lan_patch'
   },
 
   // Device type display names
@@ -12,23 +14,36 @@ export const CONSTANTS = {
     router: 'Router',
     poe_sw: 'PoE SW',
     ap: 'AP',
-    pc: 'PC'
+    pc: 'PC',
+    power_outlet: 'Power Outlet',
+    lan_patch: 'LAN Patch'
   },
 
   // 機器アイコンサイズ
-  DEVICE_ICON_SIZE: 30,
+  DEVICE_ICON_SIZE: 8,
 
   // 機器カラー（デフォルト）
   DEVICE_COLORS: {
     router: '#FF6B6B',
-    poe_sw: '#4ECDC4',
-    ap: '#95E1D3',
-    pc: '#FFD93D'
+    poe_sw: '#2E7D32',
+    ap: '#81C784',
+    pc: '#616161',
+    power_outlet: '#FF0000',
+    lan_patch: '#00AA00'
   },
 
   // 配線デフォルトカラー
   CABLE_DEFAULT_COLOR: '#00AA00',
-  CABLE_COLORS: ['#00AA00', '#333333', '#FF6B6B', '#4ECDC4', '#95E1D3', '#FFA07A', '#9370DB'],
+  CABLE_COLORS: {
+    LAN: '#00AA00',      // LANケーブル（緑）
+    POWER: '#FF0000',    // 電源ケーブル（赤）
+    OTHER: '#616161'     // その他ケーブル（濃い灰色）
+  },
+  CABLE_COLOR_NAMES: {
+    '#00AA00': 'LAN',
+    '#FF0000': 'Power',
+    '#616161': 'Other'
+  },
 
   // 線の太さ
   LINE_WIDTH: 2,

@@ -227,13 +227,18 @@ export class CableManager {
   }
 
   /**
-   * 集計データを取得
+   * 集計データを取得（LANケーブルのみ）
    * @returns {Object} 長さ別の本数マップ
    */
   getSummary() {
     const summary = {};
 
+    // LANケーブル（緑色）のみを集計
     this.cables.forEach(cable => {
+      if (cable.color !== CONSTANTS.CABLE_COLORS.LAN) {
+        return;
+      }
+
       const length = this.settings.roundingMode
         ? cable.roundedLength
         : parseFloat(cable.lengthWithMargin.toFixed(1));
@@ -261,11 +266,16 @@ export class CableManager {
   }
 
   /**
-   * 総延長を取得
+   * 総延長を取得（LANケーブルのみ）
    * @returns {number} 総延長(m)
    */
   getTotalLength() {
     return this.cables.reduce((sum, cable) => {
+      // LANケーブル（緑色）のみを集計
+      if (cable.color !== CONSTANTS.CABLE_COLORS.LAN) {
+        return sum;
+      }
+
       const length = this.settings.roundingMode
         ? cable.roundedLength
         : cable.lengthWithMargin;
@@ -316,6 +326,22 @@ export class CableManager {
 
     cable.offset = offset;
     this._recalculateCable(cable);
+    return true;
+  }
+
+  /**
+   * ケーブルの色を変更
+   * @param {string} id - ケーブルID
+   * @param {string} color - 新しい色
+   * @returns {boolean} 変更成功したかどうか
+   */
+  setCableColor(id, color) {
+    const cable = this.getCableById(id);
+    if (!cable) {
+      return false;
+    }
+
+    cable.color = color;
     return true;
   }
 

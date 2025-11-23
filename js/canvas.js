@@ -195,18 +195,31 @@ export class CanvasRenderer {
 
     devices.forEach(device => {
       const isSelected = device.id === this.selectedDeviceId;
-      const radius = CONSTANTS.DEVICE_ICON_SIZE / 2;
+      const size = CONSTANTS.DEVICE_ICON_SIZE;
 
-      // 円を描画
-      this.ctx.beginPath();
-      this.ctx.arc(device.x, device.y, radius, 0, Math.PI * 2);
-      this.ctx.fillStyle = device.color;
-      this.ctx.fill();
+      if (device.type === 'power_outlet' || device.type === 'lan_patch') {
+        // 電源アウトレットとLANパッチは四角で描画
+        const halfSize = size / 2;
+        this.ctx.fillStyle = device.color;
+        this.ctx.fillRect(device.x - halfSize, device.y - halfSize, size, size);
 
-      // 枠線
-      this.ctx.strokeStyle = isSelected ? '#FF0000' : '#000000';
-      this.ctx.lineWidth = (isSelected ? 3 : 2) / this.zoom;
-      this.ctx.stroke();
+        // 枠線
+        this.ctx.strokeStyle = isSelected ? '#FF0000' : '#000000';
+        this.ctx.lineWidth = (isSelected ? 3 : 2) / this.zoom;
+        this.ctx.strokeRect(device.x - halfSize, device.y - halfSize, size, size);
+      } else {
+        // 他の機器は円で描画
+        const radius = size / 2;
+        this.ctx.beginPath();
+        this.ctx.arc(device.x, device.y, radius, 0, Math.PI * 2);
+        this.ctx.fillStyle = device.color;
+        this.ctx.fill();
+
+        // 枠線
+        this.ctx.strokeStyle = isSelected ? '#FF0000' : '#000000';
+        this.ctx.lineWidth = (isSelected ? 3 : 2) / this.zoom;
+        this.ctx.stroke();
+      }
     });
 
     this.ctx.restore();
@@ -342,6 +355,11 @@ export class CanvasRenderer {
    * 機器名を描画（最前面）
    */
   drawDeviceLabels() {
+    // showLabels設定がオフの場合は表示しない
+    if (!this.projectManager.settings.showLabels) {
+      return;
+    }
+
     const devices = this.projectManager.deviceManager.getAllDevices();
 
     this.ctx.save();
@@ -349,6 +367,11 @@ export class CanvasRenderer {
     this.ctx.scale(this.zoom, this.zoom);
 
     devices.forEach(device => {
+      // 電源アウトレットとLANパッチは名前を表示しない
+      if (device.type === 'power_outlet' || device.type === 'lan_patch' || !device.name) {
+        return;
+      }
+
       const radius = CONSTANTS.DEVICE_ICON_SIZE / 2;
       const textY = device.y + radius + 5 / this.zoom;
 
