@@ -101,7 +101,8 @@ header h1 {
   border-color: #2196F3;
 }
 
-#device-type-selector {
+#device-type-selector,
+#cable-type-selector {
   display: flex;
   gap: 15px;
   margin-left: 15px;
@@ -109,7 +110,8 @@ header h1 {
   border-left: 1px solid #ddd;
 }
 
-#device-type-selector label {
+#device-type-selector label,
+#cable-type-selector label {
   display: flex;
   align-items: center;
   gap: 5px;
