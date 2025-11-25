@@ -204,7 +204,7 @@ class Application {
       this.handleDeleteClick(realPos);
     } else {
       // VIEW モード: 機器をドラッグ
-      const device = this.deviceManager.getDeviceAtPosition(realPos.x, realPos.y);
+      const device = this.deviceManager.getDeviceAtPosition(realPos.x, realPos.y, CONSTANTS.DEVICE_ICON_SIZE / 2);
       if (device) {
         this.state.isDragging = true;
         this.state.draggedDevice = device;
@@ -414,7 +414,7 @@ class Application {
       return;
     }
 
-    const device = this.deviceManager.getDeviceAtPosition(pos.x, pos.y);
+    const device = this.deviceManager.getDeviceAtPosition(pos.x, pos.y, CONSTANTS.DEVICE_ICON_SIZE / 2);
 
     if (!device) {
       // 機器以外をクリック
@@ -466,7 +466,8 @@ class Application {
     if (!toDevice && this.state.currentMousePos) {
       toDevice = this.deviceManager.getDeviceAtPosition(
         this.state.currentMousePos.x,
-        this.state.currentMousePos.y
+        this.state.currentMousePos.y,
+        CONSTANTS.DEVICE_ICON_SIZE / 2
       );
     }
 
@@ -526,7 +527,7 @@ class Application {
    * 削除クリック処理
    */
   handleDeleteClick(pos) {
-    const device = this.deviceManager.getDeviceAtPosition(pos.x, pos.y);
+    const device = this.deviceManager.getDeviceAtPosition(pos.x, pos.y, CONSTANTS.DEVICE_ICON_SIZE / 2);
     if (device) {
       this.deleteDevice(device.id);
     }
