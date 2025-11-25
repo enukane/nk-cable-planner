@@ -207,6 +207,23 @@ export class CanvasRenderer {
         this.ctx.strokeStyle = isSelected ? '#FF0000' : '#000000';
         this.ctx.lineWidth = (isSelected ? 3 : 2) / this.zoom;
         this.ctx.strokeRect(device.x - halfSize, device.y - halfSize, size, size);
+      } else if (device.type === 'custom') {
+        // カスタムデバイスは三角で描画
+        const halfSize = size / 2;
+        this.ctx.beginPath();
+        // 上向き三角形
+        this.ctx.moveTo(device.x, device.y - halfSize);  // 上の頂点
+        this.ctx.lineTo(device.x - halfSize, device.y + halfSize);  // 左下
+        this.ctx.lineTo(device.x + halfSize, device.y + halfSize);  // 右下
+        this.ctx.closePath();
+
+        this.ctx.fillStyle = device.color;
+        this.ctx.fill();
+
+        // 枠線
+        this.ctx.strokeStyle = isSelected ? '#FF0000' : '#000000';
+        this.ctx.lineWidth = (isSelected ? 3 : 2) / this.zoom;
+        this.ctx.stroke();
       } else {
         // 他の機器は円で描画
         const radius = size / 2;

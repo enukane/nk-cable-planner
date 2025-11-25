@@ -6,7 +6,8 @@ export const CONSTANTS = {
     AP: 'ap',
     PC: 'pc',
     POWER_OUTLET: 'power_outlet',
-    LAN_PATCH: 'lan_patch'
+    LAN_PATCH: 'lan_patch',
+    CUSTOM: 'custom'
   },
 
   // Device type display names
@@ -16,7 +17,8 @@ export const CONSTANTS = {
     ap: 'AP',
     pc: 'PC',
     power_outlet: 'Power Outlet',
-    lan_patch: 'LAN Patch'
+    lan_patch: 'LAN Patch',
+    custom: 'Custom'
   },
 
   // 機器アイコンサイズ
@@ -29,15 +31,54 @@ export const CONSTANTS = {
     ap: '#81C784',
     pc: '#616161',
     power_outlet: '#FF0000',
-    lan_patch: '#00AA00'
+    lan_patch: '#00AA00',
+    custom: '#9C27B0'  // デフォルトは紫
   },
+
+  // カスタムデバイス用カラーパレット
+  CUSTOM_DEVICE_COLORS: [
+    { name: 'Purple', code: '#9C27B0' },
+    { name: 'Deep Purple', code: '#673AB7' },
+    { name: 'Indigo', code: '#3F51B5' },
+    { name: 'Blue', code: '#2196F3' },
+    { name: 'Cyan', code: '#00BCD4' },
+    { name: 'Teal', code: '#009688' },
+    { name: 'Orange', code: '#FF9800' },
+    { name: 'Deep Orange', code: '#FF5722' },
+    { name: 'Brown', code: '#795548' },
+    { name: 'Pink', code: '#E91E63' }
+  ],
 
   // 配線デフォルトカラー
   CABLE_DEFAULT_COLOR: '#00AA00',
+
+  // ケーブルタイプ定義
+  CABLE_TYPES: [
+    { name: 'LAN', color: '#00AA00', description: 'LAN Cable (Green)' },
+    { name: 'Fiber SMF', color: '#2196F3', description: 'Single Mode Fiber (Blue)' },
+    { name: 'Fiber MMF', color: '#FF9800', description: 'Multi Mode Fiber (Orange)' },
+    { name: 'Power', color: '#FF0000', description: 'Power Cable (Red)' }
+  ],
+
+  // カスタムケーブル用カラーパレット（カスタムデバイスと同じ10色）
+  CUSTOM_CABLE_COLORS: [
+    { name: 'Purple', code: '#9C27B0' },
+    { name: 'Deep Purple', code: '#673AB7' },
+    { name: 'Indigo', code: '#3F51B5' },
+    { name: 'Blue', code: '#2196F3' },
+    { name: 'Cyan', code: '#00BCD4' },
+    { name: 'Teal', code: '#009688' },
+    { name: 'Orange', code: '#FF9800' },
+    { name: 'Deep Orange', code: '#FF5722' },
+    { name: 'Brown', code: '#795548' },
+    { name: 'Pink', code: '#E91E63' }
+  ],
+
+  // 後方互換性のため残す
   CABLE_COLORS: {
-    LAN: '#00AA00',      // LANケーブル（緑）
-    POWER: '#FF0000',    // 電源ケーブル（赤）
-    OTHER: '#616161'     // その他ケーブル（濃い灰色）
+    LAN: '#00AA00',
+    POWER: '#FF0000',
+    OTHER: '#616161'
   },
   CABLE_COLOR_NAMES: {
     '#00AA00': 'LAN',

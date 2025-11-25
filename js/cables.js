@@ -36,6 +36,8 @@ export class CableManager {
    * @param {DeviceManager} deviceManager - 機器マネージャー
    * @param {number} pixelPerMeter - px/m換算比率
    * @param {string} color - 線の色
+   * @param {string} cableType - ケーブルタイプ名
+   * @param {string} customTypeName - カスタムタイプ名
    * @returns {Object} 追加したケーブルオブジェクト
    */
   addDetailedCable(
@@ -45,7 +47,9 @@ export class CableManager {
     name = null,
     deviceManager,
     pixelPerMeter,
-    color = CONSTANTS.CABLE_DEFAULT_COLOR
+    color = CONSTANTS.CABLE_DEFAULT_COLOR,
+    cableType = 'LAN',
+    customTypeName = null
   ) {
     const fromDevice = deviceManager.getDeviceById(fromDeviceId);
     const toDevice = deviceManager.getDeviceById(toDeviceId);
@@ -81,6 +85,8 @@ export class CableManager {
       mode: CONSTANTS.CABLE_MODES.DETAILED,
       waypoints: [...waypoints],
       color,
+      cableType,
+      customTypeName,
       lineStyle: CONSTANTS.LINE_STYLE.SOLID,
       lengthPx,
       lengthM,
@@ -103,6 +109,8 @@ export class CableManager {
    * @param {string} name - ケーブル名（省略時は自動生成）
    * @param {DeviceManager} deviceManager - 機器マネージャー
    * @param {string} color - 線の色
+   * @param {string} cableType - ケーブルタイプ名
+   * @param {string} customTypeName - カスタムタイプ名
    * @returns {Object} 追加したケーブルオブジェクト
    */
   addSimpleCable(
@@ -111,7 +119,9 @@ export class CableManager {
     manualLength,
     name = null,
     deviceManager,
-    color = CONSTANTS.CABLE_DEFAULT_COLOR
+    color = CONSTANTS.CABLE_DEFAULT_COLOR,
+    cableType = 'LAN',
+    customTypeName = null
   ) {
     const fromDevice = deviceManager.getDeviceById(fromDeviceId);
     const toDevice = deviceManager.getDeviceById(toDeviceId);
@@ -131,6 +141,8 @@ export class CableManager {
       mode: CONSTANTS.CABLE_MODES.SIMPLE,
       manualLength,
       color,
+      cableType,
+      customTypeName,
       lineStyle: CONSTANTS.LINE_STYLE.DASHED,
       lengthM: manualLength,
       offset: 0,
@@ -342,6 +354,26 @@ export class CableManager {
     }
 
     cable.color = color;
+    return true;
+  }
+
+  /**
+   * ケーブルタイプを変更
+   * @param {string} id - ケーブルID
+   * @param {string} color - 新しい色
+   * @param {string} cableType - 新しいケーブルタイプ名
+   * @param {string} customTypeName - カスタムタイプ名
+   * @returns {boolean} 変更成功したかどうか
+   */
+  setCableType(id, color, cableType, customTypeName = null) {
+    const cable = this.getCableById(id);
+    if (!cable) {
+      return false;
+    }
+
+    cable.color = color;
+    cable.cableType = cableType;
+    cable.customTypeName = customTypeName;
     return true;
   }
 

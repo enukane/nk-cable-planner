@@ -25,6 +25,7 @@ class Application {
     this.state = {
       currentMode: CONSTANTS.MODES.VIEW,
       selectedDeviceType: 'router',
+      selectedCableType: 'LAN',
       isDragging: false,
       isSpacePressed: false,
       dragStartX: 0,
@@ -69,6 +70,13 @@ class Application {
     document.querySelectorAll('input[name="device-type"]').forEach(radio => {
       radio.addEventListener('change', (e) => {
         this.state.selectedDeviceType = e.target.value;
+      });
+    });
+
+    // ケーブルタイプ選択
+    document.querySelectorAll('input[name="cable-type"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        this.state.selectedCableType = e.target.value;
       });
     });
 
@@ -131,6 +139,13 @@ class Application {
     // 機器タイプセレクターの表示切替
     const deviceTypeSelector = document.getElementById('device-type-selector');
     deviceTypeSelector.style.display = mode === CONSTANTS.MODES.DEVICE ? 'flex' : 'none';
+
+    // ケーブルタイプセレクターの表示切替
+    const cableTypeSelector = document.getElementById('cable-type-selector');
+    const isCableMode = mode === CONSTANTS.MODES.CABLE_DETAIL ||
+                        mode === CONSTANTS.MODES.CABLE_DETAIL_ORTHO ||
+                        mode === CONSTANTS.MODES.CABLE_SIMPLE;
+    cableTypeSelector.style.display = isCableMode ? 'flex' : 'none';
 
     // 配線作成をキャンセル
     this.state.tempPoints = [];
@@ -379,9 +394,93 @@ class Application {
   }
 
   /**
+   * Show custom device dialog
+   */
+  showCustomDeviceDialog(pos) {
+    const typeName = prompt('Enter device type name (e.g., Camera, Sensor):');
+    if (!typeName) return;
+
+    const deviceName = prompt('Enter device name (leave empty for auto-generation):');
+    if (deviceName === null) return;
+
+    // 色選択
+    const colorOptions = CONSTANTS.CUSTOM_DEVICE_COLORS.map((c, i) =>
+      `${i + 1}. ${c.name} (${c.code})`
+    ).join('\n');
+    const colorChoice = prompt(`Select color (1-${CONSTANTS.CUSTOM_DEVICE_COLORS.length}):\n${colorOptions}`, '1');
+    if (colorChoice === null) return;
+
+    const colorIndex = parseInt(colorChoice) - 1;
+    const color = (colorIndex >= 0 && colorIndex < CONSTANTS.CUSTOM_DEVICE_COLORS.length)
+      ? CONSTANTS.CUSTOM_DEVICE_COLORS[colorIndex].code
+      : CONSTANTS.CUSTOM_DEVICE_COLORS[0].code;
+
+    const device = this.deviceManager.addDevice(
+      'custom',
+      pos.x,
+      pos.y,
+      deviceName || undefined,
+      color,
+      typeName
+    );
+
+    this.renderer.selectedDeviceId = device.id;
+    this.saveToLocalStorage();
+    this.render();
+    this.updateUI();
+  }
+
+  /**
+   * Handle edit custom device
+   */
+  handleEditCustomDevice(deviceId) {
+    const device = this.deviceManager.getDeviceById(deviceId);
+    if (!device || device.type !== 'custom') return;
+
+    const newTypeName = prompt('Enter device type name:', device.customTypeName || '');
+    if (newTypeName === null) return;
+
+    const newDeviceName = prompt('Enter device name:', device.name || '');
+    if (newDeviceName === null) return;
+
+    // 現在の色のインデックスを見つける
+    const currentColorIndex = CONSTANTS.CUSTOM_DEVICE_COLORS.findIndex(c => c.code === device.color);
+    const defaultChoice = currentColorIndex >= 0 ? (currentColorIndex + 1).toString() : '1';
+
+    // 色選択
+    const colorOptions = CONSTANTS.CUSTOM_DEVICE_COLORS.map((c, i) =>
+      `${i + 1}. ${c.name} (${c.code})`
+    ).join('\n');
+    const colorChoice = prompt(`Select color (1-${CONSTANTS.CUSTOM_DEVICE_COLORS.length}):\n${colorOptions}`, defaultChoice);
+    if (colorChoice === null) return;
+
+    const colorIndex = parseInt(colorChoice) - 1;
+    const newColor = (colorIndex >= 0 && colorIndex < CONSTANTS.CUSTOM_DEVICE_COLORS.length)
+      ? CONSTANTS.CUSTOM_DEVICE_COLORS[colorIndex].code
+      : device.color;
+
+    this.deviceManager.updateCustomDevice(
+      deviceId,
+      newDeviceName,
+      newTypeName,
+      newColor
+    );
+
+    this.saveToLocalStorage();
+    this.render();
+    this.updateUI();
+  }
+
+  /**
    * Handle device placement click
    */
   handleDeviceClick(pos) {
+    // カスタムデバイスの場合はモーダルを表示
+    if (this.state.selectedDeviceType === 'custom') {
+      this.showCustomDeviceDialog(pos);
+      return;
+    }
+
     let name;
 
     // 電源アウトレットまたはLANパッチの場合は名前入力をスキップ
@@ -475,6 +574,9 @@ class Application {
       return;
     }
 
+    // 選択されたケーブルタイプを取得
+    const { color, cableType, customTypeName } = this.getSelectedCableTypeInfo();
+
     // 自動生成された名前を使用
     this.cableManager.addDetailedCable(
       this.state.tempFromDevice.id,
@@ -482,7 +584,10 @@ class Application {
       this.state.tempPoints,
       null, // 自動生成
       this.deviceManager,
-      this.projectManager.scale.pixelPerMeter
+      this.projectManager.scale.pixelPerMeter,
+      color,
+      cableType,
+      customTypeName
     );
 
     this.state.tempPoints = [];
@@ -492,6 +597,60 @@ class Application {
     this.saveToLocalStorage();
     this.render();
     this.updateUI();
+  }
+
+  /**
+   * Get selected cable type information
+   */
+  getSelectedCableTypeInfo() {
+    const selectedType = this.state.selectedCableType;
+
+    // Customタイプの場合はプロンプトで入力
+    if (selectedType === 'Custom') {
+      const customTypeName = prompt('Enter custom cable type name (e.g., HDMI, USB):');
+      if (!customTypeName) {
+        // キャンセルされた場合はLANをデフォルトに
+        return {
+          color: CONSTANTS.CABLE_TYPES[0].color,
+          cableType: CONSTANTS.CABLE_TYPES[0].name,
+          customTypeName: null
+        };
+      }
+
+      // カスタムカラー選択
+      const colorOptions = CONSTANTS.CUSTOM_CABLE_COLORS.map((c, i) =>
+        `${i + 1}. ${c.name} (${c.code})`
+      ).join('\n');
+      const colorChoice = prompt(`Select color (1-${CONSTANTS.CUSTOM_CABLE_COLORS.length}):\n${colorOptions}`, '1');
+
+      const colorIndex = parseInt(colorChoice) - 1;
+      const color = (colorIndex >= 0 && colorIndex < CONSTANTS.CUSTOM_CABLE_COLORS.length)
+        ? CONSTANTS.CUSTOM_CABLE_COLORS[colorIndex].code
+        : CONSTANTS.CUSTOM_CABLE_COLORS[0].code;
+
+      return {
+        color,
+        cableType: 'Custom',
+        customTypeName
+      };
+    }
+
+    // プリセットタイプの場合
+    const cableType = CONSTANTS.CABLE_TYPES.find(t => t.name === selectedType);
+    if (cableType) {
+      return {
+        color: cableType.color,
+        cableType: cableType.name,
+        customTypeName: null
+      };
+    }
+
+    // デフォルト（LAN）
+    return {
+      color: CONSTANTS.CABLE_TYPES[0].color,
+      cableType: CONSTANTS.CABLE_TYPES[0].name,
+      customTypeName: null
+    };
   }
 
   /**
@@ -506,13 +665,19 @@ class Application {
       return;
     }
 
+    // 選択されたケーブルタイプを取得
+    const { color, cableType, customTypeName } = this.getSelectedCableTypeInfo();
+
     // 自動生成された名前を使用
     this.cableManager.addSimpleCable(
       this.state.tempFromDevice.id,
       toDevice.id,
       parseFloat(length),
       null, // 自動生成
-      this.deviceManager
+      this.deviceManager,
+      color,
+      cableType,
+      customTypeName
     );
 
     this.state.tempFromDevice = null;
@@ -742,7 +907,16 @@ class Application {
       return;
     }
 
-    container.innerHTML = devices.map(device => `
+    container.innerHTML = devices.map(device => {
+      const typeName = device.type === 'custom' && device.customTypeName
+        ? device.customTypeName
+        : CONSTANTS.DEVICE_TYPE_NAMES[device.type];
+
+      const editButton = device.type === 'custom'
+        ? `<button class="btn-edit-device" data-id="${device.id}">✏️ Edit</button>`
+        : '';
+
+      return `
       <div class="device-item ${device.id === this.renderer.selectedDeviceId ? 'selected' : ''}" data-id="${device.id}">
         <div class="device-item-header">
           <div>
@@ -750,23 +924,32 @@ class Application {
               <span class="color-indicator" style="background-color: ${device.color}"></span>
               ${device.name}
             </div>
-            <div class="device-type">${CONSTANTS.DEVICE_TYPE_NAMES[device.type]}</div>
+            <div class="device-type">${typeName}</div>
           </div>
           <div class="item-actions">
+            ${editButton}
             <button class="btn-delete-device" data-id="${device.id}">Delete</button>
           </div>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
 
     // イベント追加
     container.querySelectorAll('.device-item').forEach(item => {
       item.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('btn-delete-device')) {
+        if (!e.target.classList.contains('btn-delete-device') &&
+            !e.target.classList.contains('btn-edit-device')) {
           this.renderer.selectedDeviceId = item.dataset.id;
           this.render();
           this.updateUI();
         }
+      });
+    });
+
+    container.querySelectorAll('.btn-edit-device').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.handleEditCustomDevice(btn.dataset.id);
       });
     });
 
@@ -797,7 +980,12 @@ class Application {
       const modeText = cable.mode === 'detailed' ? 'Detailed' : 'Simple';
 
       const offsetText = cable.offset > 0 ? ` (${cable.lengthM.toFixed(1)}m + ${cable.offset.toFixed(1)}m offset)` : '';
-      const colorName = CONSTANTS.CABLE_COLOR_NAMES[cable.color] || 'Custom';
+
+      // ケーブルタイプ名を表示
+      let typeName = cable.cableType || 'LAN';
+      if (cable.cableType === 'Custom' && cable.customTypeName) {
+        typeName = cable.customTypeName;
+      }
 
       return `
         <div class="cable-item ${cable.id === this.renderer.selectedCableId ? 'selected' : ''}" data-id="${cable.id}">
@@ -810,7 +998,7 @@ class Application {
               </div>
               <div class="cable-mode">
                 ${modeText}: ${fromDevice?.name} → ${toDevice?.name}
-                <span class="cable-type-badge" style="background-color: ${cable.color}">${colorName}</span>
+                <span class="cable-type-badge" style="background-color: ${cable.color}">${typeName}</span>
                 <button class="btn-change-color" data-id="${cable.id}" title="Change cable type">🎨</button>
               </div>
               <div class="cable-length">
@@ -926,33 +1114,49 @@ class Application {
     const cable = this.cableManager.getCableById(cableId);
     if (!cable) return;
 
-    const colorOptions = `
-1. LAN Cable (Green)
-2. Power Cable (Red)
-3. Other Cable (Dark Gray)
+    // ケーブルタイプ選択
+    let optionsText = 'Select cable type:\n\n';
+    CONSTANTS.CABLE_TYPES.forEach((type, i) => {
+      optionsText += `${i + 1}. ${type.description}\n`;
+    });
+    optionsText += `${CONSTANTS.CABLE_TYPES.length + 1}. Custom (10 colors)\n\nEnter your choice:`;
 
-Enter your choice (1-3):`;
-
-    const choice = prompt(colorOptions);
+    const choice = prompt(optionsText);
     if (!choice) return;
 
-    let newColor;
-    switch (choice) {
-      case '1':
-        newColor = CONSTANTS.CABLE_COLORS.LAN;
-        break;
-      case '2':
-        newColor = CONSTANTS.CABLE_COLORS.POWER;
-        break;
-      case '3':
-        newColor = CONSTANTS.CABLE_COLORS.OTHER;
-        break;
-      default:
-        alert('Invalid choice. Please enter 1, 2, or 3.');
-        return;
+    const choiceNum = parseInt(choice);
+    let newColor, newCableType, newCustomTypeName = null;
+
+    if (choiceNum >= 1 && choiceNum <= CONSTANTS.CABLE_TYPES.length) {
+      // プリセットタイプを選択
+      const selectedType = CONSTANTS.CABLE_TYPES[choiceNum - 1];
+      newColor = selectedType.color;
+      newCableType = selectedType.name;
+    } else if (choiceNum === CONSTANTS.CABLE_TYPES.length + 1) {
+      // カスタムタイプを選択
+      const customTypeName = prompt('Enter custom cable type name (e.g., HDMI, USB):');
+      if (!customTypeName) return;
+
+      // カスタムカラー選択
+      const colorOptions = CONSTANTS.CUSTOM_CABLE_COLORS.map((c, i) =>
+        `${i + 1}. ${c.name} (${c.code})`
+      ).join('\n');
+      const colorChoice = prompt(`Select color (1-${CONSTANTS.CUSTOM_CABLE_COLORS.length}):\n${colorOptions}`, '1');
+      if (colorChoice === null) return;
+
+      const colorIndex = parseInt(colorChoice) - 1;
+      newColor = (colorIndex >= 0 && colorIndex < CONSTANTS.CUSTOM_CABLE_COLORS.length)
+        ? CONSTANTS.CUSTOM_CABLE_COLORS[colorIndex].code
+        : CONSTANTS.CUSTOM_CABLE_COLORS[0].code;
+
+      newCableType = 'Custom';
+      newCustomTypeName = customTypeName;
+    } else {
+      alert('Invalid choice.');
+      return;
     }
 
-    if (this.cableManager.setCableColor(cableId, newColor)) {
+    if (this.cableManager.setCableType(cableId, newColor, newCableType, newCustomTypeName)) {
       this.saveToLocalStorage();
       this.render();
       this.updateUI();
@@ -963,31 +1167,64 @@ Enter your choice (1-3):`;
    * Render summary tab
    */
   renderSummaryTab(container) {
-    const summary = this.cableManager.getSummary();
+    const cables = this.cableManager.getAllCables();
     const stats = this.cableManager.getCableStats();
-    const totalLength = this.cableManager.getTotalLength();
+    const roundingMode = this.projectManager.settings.roundingMode;
 
-    const sorted = Object.entries(summary).sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]));
+    // ケーブルタイプ別に集計
+    const summaryByType = {};
 
-    // LANケーブル数を計算
-    const lanCableCount = this.cableManager.getAllCables().filter(
-      c => c.color === CONSTANTS.CABLE_COLORS.LAN
-    ).length;
+    cables.forEach(cable => {
+      let typeName = cable.cableType || 'LAN';
+      if (cable.cableType === 'Custom' && cable.customTypeName) {
+        typeName = cable.customTypeName;
+      }
 
-    let html = '<h4 style="color: #00AA00; margin-bottom: 10px;">LAN Cable Summary</h4>';
-    html += '<table class="summary-table"><thead><tr><th>Cable Length</th><th>Quantity</th></tr></thead><tbody>';
+      if (!summaryByType[typeName]) {
+        summaryByType[typeName] = {
+          color: cable.color,
+          cables: [],
+          totalLength: 0
+        };
+      }
 
-    sorted.forEach(([length, count]) => {
-      html += `<tr><td>${length}m</td><td>${count}</td></tr>`;
+      const length = roundingMode ? cable.roundedLength : cable.lengthWithMargin;
+      summaryByType[typeName].cables.push({ length, cable });
+      summaryByType[typeName].totalLength += length;
     });
 
-    html += '</tbody></table>';
+    let html = '<h3>Cable Summary by Type</h3>';
 
+    // タイプ別に表示
+    Object.entries(summaryByType).forEach(([typeName, data]) => {
+      html += `<h4 style="color: ${data.color}; margin-top: 20px; margin-bottom: 10px;">${typeName}</h4>`;
+
+      // 長さ別に集計
+      const lengthSummary = {};
+      data.cables.forEach(({ length }) => {
+        const key = String(length.toFixed(1));
+        lengthSummary[key] = (lengthSummary[key] || 0) + 1;
+      });
+
+      const sorted = Object.entries(lengthSummary).sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]));
+
+      html += '<table class="summary-table"><thead><tr><th>Length</th><th>Quantity</th></tr></thead><tbody>';
+      sorted.forEach(([length, count]) => {
+        html += `<tr><td>${length}m</td><td>${count}</td></tr>`;
+      });
+      html += '</tbody></table>';
+
+      html += `
+        <div class="summary-stats" style="background-color: ${data.color}22;">
+          <div><strong>Total ${typeName}:</strong> ${data.cables.length} cables</div>
+          <div><strong>Total length:</strong> ${data.totalLength.toFixed(1)}m</div>
+        </div>
+      `;
+    });
+
+    // 全体統計
     html += `
-      <div class="summary-stats">
-        <div><strong>LAN cables:</strong> ${lanCableCount}</div>
-        <div><strong>Total LAN length:</strong> ${totalLength.toFixed(1)}m</div>
-        <hr style="margin: 10px 0;">
+      <div class="summary-stats" style="margin-top: 20px; background-color: #e0e0e0;">
         <div><strong>All cables:</strong> ${stats.total}</div>
         <div><strong>Detailed:</strong> ${stats.detailed}</div>
         <div><strong>Simple:</strong> ${stats.simple}</div>

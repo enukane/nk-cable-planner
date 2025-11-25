@@ -13,7 +13,8 @@ export class DeviceManager {
       ap: 0,
       pc: 0,
       power_outlet: 0,
-      lan_patch: 0
+      lan_patch: 0,
+      custom: 0
     };
   }
 
@@ -23,13 +24,15 @@ export class DeviceManager {
    * @param {number} x - X座標
    * @param {number} y - Y座標
    * @param {string} name - 機器名（省略時は自動生成、power_outletの場合は空文字）
+   * @param {string} customColor - カスタムカラー（customタイプの場合）
+   * @param {string} customTypeName - カスタム種別名（customタイプの場合）
    * @returns {Object} 追加した機器オブジェクト
    */
-  addDevice(type, x, y, name = null) {
+  addDevice(type, x, y, name = null, customColor = null, customTypeName = null) {
     const id = generateUUID();
     // 電源アウトレットまたはLANパッチの場合は名前を空にする
     const deviceName = (type === 'power_outlet' || type === 'lan_patch') ? '' : (name || this._generateDeviceName(type));
-    const color = CONSTANTS.DEVICE_COLORS[type];
+    const color = customColor || CONSTANTS.DEVICE_COLORS[type];
 
     const device = {
       id,
@@ -39,6 +42,11 @@ export class DeviceManager {
       y,
       color
     };
+
+    // カスタムデバイスの場合は種別名を追加
+    if (type === 'custom' && customTypeName) {
+      device.customTypeName = customTypeName;
+    }
 
     this.devices.push(device);
 
@@ -135,6 +143,26 @@ export class DeviceManager {
     }
 
     device.name = name;
+    return true;
+  }
+
+  /**
+   * カスタムデバイスの設定を更新
+   * @param {string} id - 機器ID
+   * @param {string} name - 新しい機器名
+   * @param {string} customTypeName - 新しい種別名
+   * @param {string} color - 新しい色
+   * @returns {boolean} 更新成功したかどうか
+   */
+  updateCustomDevice(id, name, customTypeName, color) {
+    const device = this.getDeviceById(id);
+    if (!device || device.type !== 'custom') {
+      return false;
+    }
+
+    device.name = name;
+    device.customTypeName = customTypeName;
+    device.color = color;
     return true;
   }
 
