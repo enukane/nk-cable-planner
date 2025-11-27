@@ -303,7 +303,8 @@ header h1 {
 }
 
 .btn-edit-cable-name,
-.btn-edit-offset {
+.btn-edit-offset,
+.btn-edit-device-name {
   background: none;
   border: none;
   cursor: pointer;
@@ -314,7 +315,8 @@ header h1 {
 }
 
 .btn-edit-cable-name:hover,
-.btn-edit-offset:hover {
+.btn-edit-offset:hover,
+.btn-edit-device-name:hover {
   opacity: 1;
 }
 

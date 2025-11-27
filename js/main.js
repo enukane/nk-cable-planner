@@ -912,8 +912,14 @@ class Application {
         ? device.customTypeName
         : CONSTANTS.DEVICE_TYPE_NAMES[device.type];
 
+      // カスタムデバイスは全体編集、その他は名前のみ編集
       const editButton = device.type === 'custom'
         ? `<button class="btn-edit-device" data-id="${device.id}">✏️ Edit</button>`
+        : '';
+
+      // 名前編集ボタン（電源アウトレットとLANパッチ以外）
+      const nameEditButton = (device.type !== 'power_outlet' && device.type !== 'lan_patch' && device.name)
+        ? `<button class="btn-edit-device-name" data-id="${device.id}" title="Edit name">✏️</button>`
         : '';
 
       return `
@@ -923,6 +929,7 @@ class Application {
             <div class="device-name">
               <span class="color-indicator" style="background-color: ${device.color}"></span>
               ${device.name}
+              ${nameEditButton}
             </div>
             <div class="device-type">${typeName}</div>
           </div>
@@ -939,11 +946,19 @@ class Application {
     container.querySelectorAll('.device-item').forEach(item => {
       item.addEventListener('click', (e) => {
         if (!e.target.classList.contains('btn-delete-device') &&
-            !e.target.classList.contains('btn-edit-device')) {
+            !e.target.classList.contains('btn-edit-device') &&
+            !e.target.classList.contains('btn-edit-device-name')) {
           this.renderer.selectedDeviceId = item.dataset.id;
           this.render();
           this.updateUI();
         }
+      });
+    });
+
+    container.querySelectorAll('.btn-edit-device-name').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.handleRenameDevice(btn.dataset.id);
       });
     });
 
@@ -958,6 +973,27 @@ class Application {
         this.deleteDevice(btn.dataset.id);
       });
     });
+  }
+
+  /**
+   * Handle device name rename
+   */
+  handleRenameDevice(deviceId) {
+    const device = this.deviceManager.getDeviceById(deviceId);
+    if (!device) return;
+
+    const newName = prompt('Enter new device name:', device.name);
+    if (!newName || newName === device.name) {
+      return;
+    }
+
+    if (this.deviceManager.updateDeviceName(deviceId, newName)) {
+      this.saveToLocalStorage();
+      this.render();
+      this.updateUI();
+    } else {
+      alert('Failed to update device name.');
+    }
   }
 
   /**
